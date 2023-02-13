@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script>
+    let o1 = null;
+    let o2 = null;
+
+    function onFileChange1(input) {
+        const reader = new FileReader();
+        reader.readAsText(input.files[0], 'utf-8');
+        reader.onload = () => {
+            o1 = JSON.parse(reader.result);
+            if (o2) document.getElementById('merge').removeAttribute('disabled');
+        }
+    }
+
+    function onFileChange2(input) {
+        const reader = new FileReader();
+        reader.readAsText(input.files[0], 'utf-8');
+        reader.onload = () => {
+            o2 = JSON.parse(reader.result);
+            if (o1) {
+                console.log('removing attribute', document.getElementById('merge'));
+                document.getElementById('merge').removeAttribute('disabled');
+            }
+        }
+    }
+
+    function onMerge() {
+        console.log('onMerge')
+        if (!o1 || !o2) {
+            alert('SUB-enUS.jsonまたはSUB-jaJP.jsonが指定されていません');
+            return;
+        }
+        
+        for (const [key, value] of Object.entries(o1)) {
+            if (o2[key] !== undefined && value != o2[key]) {
+                const v2 = o2[key].replace(/\[\[.*\]\]/g, '');
+                o1[key] = value + '  (' + v2 + ')';
+            }
+        }
+        const res = JSON.stringify(o1, null, 2);
+        
+        const blob = new Blob([res]);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'SUB-merged.json';
+        link.click();
+    }
+  </script>
+</head>
+<body>
+  <form id="merger">
+    <label for="f1">英語字幕ファイル(SUB-enUS.json): </label>
+    <input type="file" id="f1" accept="application/json" onchange="onFileChange1(this)">
+    <br/>
+    <label for="f1">日本語字幕ファイル(SUB-jaJP.json): </label>
+    <input type="file" id="f2" accept="application/json" onchange="onFileChange2(this)">
+    <br/>
+    <button id="merge" onclick="onMerge()" disabled>混合字幕ファイル生成</button>
+  </form>
+</body>
+</html>
